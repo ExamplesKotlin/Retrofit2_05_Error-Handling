@@ -34,9 +34,7 @@ package com.raywenderlich.android.w00tze.repository
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import com.raywenderlich.android.w00tze.app.Injection
-import com.raywenderlich.android.w00tze.model.Gist
-import com.raywenderlich.android.w00tze.model.Repo
-import com.raywenderlich.android.w00tze.model.User
+import com.raywenderlich.android.w00tze.model.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -59,6 +57,7 @@ object RemoteRepository : Repository {
           liveData.value = response.body()
         }
       }
+
       override fun onFailure(call: Call<List<Repo>>?, t: Throwable?) {
       }
     })
@@ -75,6 +74,7 @@ object RemoteRepository : Repository {
           liveData.value = response.body()
         }
       }
+
       override fun onFailure(call: Call<List<Gist>>?, t: Throwable?) {
       }
     })
@@ -82,16 +82,20 @@ object RemoteRepository : Repository {
     return liveData
   }
 
-  override fun getUser(): LiveData<User> {
-    val liveData = MutableLiveData<User>()
+  override fun getUser(): LiveData<Either<User>> {
+    val liveData = MutableLiveData<Either<User>>()
 
     api.getUser(LOGIN).enqueue(object : Callback<User> {
       override fun onResponse(call: Call<User>?, response: Response<User>?) {
-        if (response != null) {
-          liveData.value = response.body()
+        if (response != null && response.isSuccessful) {
+          liveData.value = Either.success(response.body())
+        } else {
+          liveData.value = Either.error(ApiError.USER, null)
         }
       }
+
       override fun onFailure(call: Call<User>?, t: Throwable?) {
+        liveData.value = Either.error(ApiError.USER, null)
       }
     })
 
